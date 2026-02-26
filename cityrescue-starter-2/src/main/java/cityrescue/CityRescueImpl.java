@@ -52,7 +52,9 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (x<0||y<0||x>width||y>=height) {
+            throw new InvalidLocationException("Out of Bounds");
+        }
     }
 
     @Override
