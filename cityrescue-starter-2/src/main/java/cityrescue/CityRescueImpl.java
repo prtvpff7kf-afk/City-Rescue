@@ -20,10 +20,27 @@ public class CityRescueImpl implements CityRescue {
     private int height;
     private boolean[][] obstacles;
 
+    //Storage
+    private ArrayList<Station> stations = new ArrayList<>();
+    private ArrayList<Unit> units = new ArrayList<>();
+    private ArrayList<Incident> incidents = new ArrayList<>();
+
+    //ID Counters
+    private int nextStationId = 1;
+    private int nextUnitID = 1;
+    private int nextIncidentId = 1;
+
+    private int currentTick = 0;
+
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (width <= 0 || height <= 0) {
+            throw new InvalidGridException("Invalid grid size");
+            this.width = width;
+            this.height = height;
+            obstacles = new boolean[width][height];
+        }
     }
 
     @Override
