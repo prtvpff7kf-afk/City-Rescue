@@ -191,9 +191,18 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        int[] ids = new int[stations.size()];
+
+        for (int i = 0; i < stations.size(); i++) {
+            ids[i] = stations.get(i).stationId;
+        }
+
+        //Ascending order
+        Arrays.sort(ids);
+       
+        return ids;
     }
+
 
     @Override
     public int addUnit(int stationId, UnitType type) throws IDNotRecognisedException, InvalidUnitException, IllegalStateException {
