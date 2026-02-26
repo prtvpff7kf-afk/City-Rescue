@@ -177,7 +177,7 @@ public class CityRescueImpl implements CityRescue {
         
         // Validate maxUnits
         if (maxUnits <= 0) {
-            throw new IDNotRecognisedException("Station ID not recognised");
+            throw new IDNotRecognisedException("Capacity must be positive");
         }
 
         if (maxUnits < targetStation.unitIds.size()) {
