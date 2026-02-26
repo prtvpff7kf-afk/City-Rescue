@@ -36,7 +36,6 @@ public class CityRescueImpl implements CityRescue {
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
         if (width <= 0 || height <= 0) {
-            throw new InvalidGridException("Invalid grid size");
             this.width = width;
             this.height = height;
             obstacles = new boolean[width][height];
@@ -47,13 +46,11 @@ public class CityRescueImpl implements CityRescue {
     public int[] getGridSize() {
         // TODO: implement
         return new int[]{width, height};
-        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
-            if (x<0||y<0||x>width||y>=height) {
         if (x<0||y<0||x>=width||y>=height) {
             obstacles[x][y] = true;
             throw new InvalidLocationException("Out of Bounds");
