@@ -52,9 +52,21 @@ public class CityRescueImpl implements CityRescue {
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
         if (width <= 0 || height <= 0) {
+            throw new InvalidGridException("Must be in bounds")
+
             this.width = width;
             this.height = height;
             obstacles = new boolean[width][height];
+
+            stations.clear();
+            units.clear();
+            incidents.clear();
+
+            nextStationId = 1;
+            nextUnitId = 1;
+            nextIncidentId = 1;
+
+            currentTick = 0;
         }
     }
 
@@ -81,6 +93,7 @@ public class CityRescueImpl implements CityRescue {
             obstacles[x][y] = false;
             throw new InvalidLocationException("Out of Bounds");
         }
+        bostacles[x][y] = true;
     }
 
     @Override
