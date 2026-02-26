@@ -37,6 +37,10 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    public class Unit{}
+    public class Incident{}
+
+
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
 
     //Grid
@@ -51,7 +55,7 @@ public class CityRescueImpl implements CityRescue {
 
     //ID Counters
     private int nextStationId = 1;
-    private int nextUnitID = 1;
+    private int nextUnitId = 1;
     private int nextIncidentId = 1;
 
     private int currentTick = 0;
@@ -96,12 +100,11 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void removeObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
-        if (x<0||y<0||x>=width||y>=height) {
+        if (x < 0 || y <0 || x >=width || y >=height) {
             obstacles[x][y] = false;
             throw new InvalidLocationException("Out of Bounds");
         }
-        bostacles[x][y] = true;
+        obstacles[x][y] = false;
     }
 
     @Override
