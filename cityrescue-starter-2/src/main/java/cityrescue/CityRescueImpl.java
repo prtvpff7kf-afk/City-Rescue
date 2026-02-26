@@ -125,6 +125,11 @@ public class CityRescueImpl implements CityRescue {
             throw new InvalidLocationException("Location blocked by obstacles");
         }
 
+        final int MAX_STATIONS = 20;
+        if (stations.size() >= MAX_STATIONS) {
+            throw new IllegalStateException("Max number of stations reached");
+        }
+
         Station station = new Station(nextStationId, name, x, y);
         station.maxUnits = Integer.MAX_VALUE;
         stations.add(station);
