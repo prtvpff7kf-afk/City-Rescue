@@ -13,6 +13,22 @@ import java.util.*;
  */
 public class CityRescueImpl implements CityRescue {
 
+    private static class Station{
+        int stationId;
+        String name;
+        int x;
+        int y;
+        int maxUnits = 0;
+        ArrayList<Integer> unitIds = new ArrayList<>();
+    
+        public Station(int stationId, String name, int x, int y) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.stationId = stationId;
+        }
+    }
+
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
 
     //Grid
@@ -70,6 +86,9 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
         // TODO: implement
+        if (name == null || name.isBlank()) {
+            if
+        }
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
