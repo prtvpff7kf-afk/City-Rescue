@@ -140,7 +140,24 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        // Find station
+        Station targetStation = null;
+        for (Station s : stations) {
+            if (s.stationId == stationId) {
+                targetStation = s;
+                break;
+            }
+        }
+        if (targetStation == null) {
+            throw new IllegalStateException("Station ID not recognised");
+        }
+        //Check it has no units
+        if (!targetStation.unitIds.isEmpty()) {
+            throw new IllegalStateException("Station still has units assigned");
+        }
+
+        // Remove station
+        stations.remove(targetStation);
     }
 
     @Override
