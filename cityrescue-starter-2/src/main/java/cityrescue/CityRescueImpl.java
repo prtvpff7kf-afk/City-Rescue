@@ -83,7 +83,7 @@ public class CityRescueImpl implements CityRescue {
 
         currentTick = 0;
         }
-    }
+    
 
     @Override
     public int[] getGridSize() {
@@ -162,9 +162,32 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void setStationCapacity(int stationId, int maxUnits) throws IDNotRecognisedException, InvalidCapacityException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        
+        // Find station
+        Station targetStation = null;
+        for (Station s : stations) {
+            if (s.stationId == stationId) {
+                targetStation = s;
+                break;
+            }
+        }
+        if (targetStation == null) {
+            throw new IllegalStateException("Station ID not recognised");
+        }
+        
+        // Validate maxUnits
+        if (maxUnits <= 0) {
+            throw new IDNotRecognisedException("Station ID not recognised");
+        }
+
+        if (maxUnits < targetStation.unitIds.size()) {
+            throw new InvalidCapacityException("Capacity can't be less than current number of units");
+        }
+
+        //Update capacity
+        targetStation.maxUnits = maxUnits;
     }
+    
 
     @Override
     public int[] getStationIds() {
