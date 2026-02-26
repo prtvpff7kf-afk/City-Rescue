@@ -14,18 +14,26 @@ import java.util.*;
 public class CityRescueImpl implements CityRescue {
 
     private static class Station{
-        int stationId;
-        String name;
-        int x;
-        int y;
-        int maxUnits = 0;
-        ArrayList<Integer> unitIds = new ArrayList<>();
+        private final int stationId;
+        private final String name;
+        private final int x;
+        private final int y;
+        
+        private int maxUnits = 0;
+        private ArrayList<Integer> unitIds = new ArrayList<>();
     
-        public Station(int stationId, String name, int x, int y) {
+        Station(int stationId, String name, int x, int y) {
+            this.stationId = stationId;
             this.name = name;
             this.x = x;
             this.y = y;
-            this.stationId = stationId;
+            this.maxUnits = Integer.MAX_VALUE;
+        }
+        boolean hasCapacity() {
+            return unitIds.size() < maxUnits;
+        }
+        void addUnit(int unitId) {
+            unitIds.remove(Integer.valueOf(unitId));
         }
     }
 
