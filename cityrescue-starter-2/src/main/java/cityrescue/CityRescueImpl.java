@@ -46,6 +46,7 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int[] getGridSize() {
         // TODO: implement
+        return new int[]{width, height};
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
