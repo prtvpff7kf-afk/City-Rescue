@@ -5,6 +5,8 @@ import cityrescue.exceptions.*;
 
 import java.util.*;
 
+
+
 /**
  * CityRescueImpl (Starter)
  *
@@ -111,9 +113,22 @@ public class CityRescueImpl implements CityRescue {
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
         // TODO: implement
         if (name == null || name.isBlank()) {
-            if
+            throw new InvalidNameException("Station name can't be blank");
         }
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        if (x < 0 || y <0 || x >=width || y >=height) {
+            throw new InvalidLocationException("Location out of bounds");
+        }
+
+        if (obstacles[x][y]) {
+            throw new InvalidLocationException("Location blocked by obstacles");
+        }
+
+        Station station = new Station(nextStationId, name, x, y);
+        station.maxUnits = Integer.MAX_VALUE;
+        stations.add(station);
+        
+        return nextStationId++;
     }
 
     @Override
