@@ -35,7 +35,7 @@ public class CityRescueImpl implements CityRescue {
             return unitIds.size() < maxUnits;
         }
         void addUnit(int unitId) {
-            unitIds.remove(Integer.valueOf(unitId));
+            unitIds.add(unitId);
         }
     }
 
@@ -95,9 +95,9 @@ public class CityRescueImpl implements CityRescue {
     public void addObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
         if (x<0||y<0||x>=width||y>=height) {
-            obstacles[x][y] = true;
             throw new InvalidLocationException("Out of Bounds");
         }
+        obstacles[x][y] = true;
     }
 
     @Override
