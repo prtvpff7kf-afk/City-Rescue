@@ -39,8 +39,24 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
-    public class Unit{}
-    public class Incident{}
+    private static class Unit{
+        int unitId;
+        int stationId;
+        UnitType type;
+        int x;
+        int y;
+        UnitStatus status = UnitStatus.IDLE;
+        Integer incidentId = null;
+
+        Unit(int unitId, int stationId, UnitType type, int x, int y) {
+            this.unitId = unitId;
+            this.stationId = stationId;
+            this.type = type;
+            this.x = x;
+            this.y = y;
+        }
+    }
+
 
 
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
