@@ -29,6 +29,23 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    private static class Incident{
+        IncidentType type;
+        IncidentStatus status;
+        int severity;
+        int x;
+        int y;
+        int incidentId;
+        public Incident(int incidentId, IncidentType type, int severity, int x, int y) {
+            this.incidentId = incidentId;
+            this.type = type;
+            this.severity = severity;
+            this.x = x;
+            this.y = y;
+            this.status = IncidentStatus.REPORTED;
+        }
+    }
+
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
 
     //Grid
