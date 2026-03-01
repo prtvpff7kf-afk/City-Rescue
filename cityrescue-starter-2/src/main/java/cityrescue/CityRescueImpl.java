@@ -67,6 +67,9 @@ public class CityRescueImpl implements CityRescue {
         UnitStatus status = UnitStatus.IDLE;
         Integer incidentId = null;
 
+        boolean outOfService = false;
+        int assignedIncidentId = -1;
+
         // constructor
         Unit(int unitId, int stationId, UnitType type, int x, int y) {
             this.unitId = unitId;
@@ -290,8 +293,35 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        
+        //Find Unit
+        Unit unit = null;
+        for (Unit u : units) {
+            if (u.unitId == unitId) {
+                unit = u;
+                break;
+            }
+        }
+        
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not recognised");
+        }
+
+        //Check if unit is currently busy
+        if (unit.assignedIncidentId != -1) {
+            throw new IllegalStateException("Unit is currently assigned to an incident");
+        }
+
+        //Remove from its station
+        for (Station s : stations) {
+            if (s.stationId == unit.stationId) {
+                s.unitIds.remove(Integer.valueOf(unitId));
+                break;
+            }
+        }
+
+         //Remove from system
+        units.remove(unit);
     }
 
     @Override
