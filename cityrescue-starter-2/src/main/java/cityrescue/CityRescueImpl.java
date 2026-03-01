@@ -118,7 +118,6 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
-        // TODO: implement
         if (width <= 0 || height <= 0) {
             throw new InvalidGridException("Must be in bounds");
         }
@@ -141,13 +140,11 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getGridSize() {
-        // TODO: implement
         return new int[]{width, height};
     }
 
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
-        // TODO: implement
         if (x<0||y<0||x>=width||y>=height) {
             throw new InvalidLocationException("Out of Bounds");
         }
@@ -156,7 +153,6 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void removeObstacle(int x, int y) throws InvalidLocationException {
-        // TODO: implement
         if (x < 0 || y <0 || x >=width || y >=height) {
             throw new InvalidLocationException("Out of Bounds");
         }
@@ -165,7 +161,6 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
-        // TODO: implement
         if (name == null || name.isBlank()) {
             throw new InvalidNameException("Station name can't be blank");
         }
@@ -192,7 +187,6 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
         // Find station
         Station targetStation = null;
         for (Station s : stations) {
@@ -252,15 +246,46 @@ public class CityRescueImpl implements CityRescue {
 
         //Ascending order
         Arrays.sort(ids);
-       
+
         return ids;
     }
 
 
-    @Override
+@Override
     public int addUnit(int stationId, UnitType type) throws IDNotRecognisedException, InvalidUnitException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        
+        // Validate unit type
+        if (type == null) {
+            throw new InvalidUnitException("Unit type can't be null");
+        }
+
+        //Find station
+        Station station = null;
+        for (Station s : stations) {
+            if (s.stationId == stationId) {
+                station = s;
+                break;
+            }
+        }
+        
+        if (station == null) {
+            throw new IDNotRecognisedException("Station ID not recognised");
+        }
+
+        //Check capacity
+        if (!station.hasCapacity()) {
+            throw new IllegalStateException("Station has no free capacity");
+        }
+
+        // Create unit
+        Unit newUnit = new Unit(nextUnitId, stationId, type, station.x, station.y);
+
+        //Store unit
+        units.add(newUnit);
+        station.addUnit(nextUnitId);
+
+        //Return ID
+        return nextUnitId++;
     }
 
     @Override
