@@ -16,6 +16,8 @@ import java.util.Arrays;
  */
 public class CityRescueImpl implements CityRescue {
 
+
+
     private static class Station{
 
         //attributes
@@ -487,8 +489,7 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getUnitIds() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        return gridSize;
     }
 
     @Override
