@@ -151,14 +151,14 @@ public class CityRescueImpl implements CityRescue {
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
 
     //Grid
-    private CityMap cityMap
+    private CityMap cityMap;
 
     //Storage for stations, units and incidents with arrays
     private static final int MAX_STATIONS = 20;
     private static final int MAX_UNITS = 50;
     private static final int MAX_INCIDENTS = 200;
 
-    private station[] stations = new station[MAX_STATIONS];
+    private Station[] stations = new Station[MAX_STATIONS];
     private int stationCount = 0;
 
     private Unit[] units = new Unit[MAX_UNITS];
@@ -176,14 +176,11 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
-        if (width <= 0 || height <= 0) {
-            throw new InvalidGridException("Must be in bounds");
-        }
+        
+        // initialisation of the city map.
+        this.cityMap = new CityMap(width, height);
 
-        this.width = width;
-        this.height = height;
-        obstacles = new boolean[width][height];
-
+        //reset the counters and IDs
         stationCount = 0;
         unitCount = 0;
         incidentCount = 0;
@@ -198,48 +195,44 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getGridSize() {
-        return new int[]{width, height};
+        return new int[]
+        { cityMap.getWidth(), cityMap.getHeight() };
     }
 
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
-        if (x<0||y<0||x>=width||y>=height) {
-            throw new InvalidLocationException("Out of Bounds");
-        }
-        obstacles[x][y] = true;
+        cityMap.addObstacle(x, y);  // called from citymap
     }
-
     @Override
     public void removeObstacle(int x, int y) throws InvalidLocationException {
-        if (x < 0 || y <0 || x >=width || y >=height) {
-            throw new InvalidLocationException("Out of Bounds");
-        }
-        obstacles[x][y] = false;
+        cityMap.removeObstacle(x, y); // called from citymap
     }
 
     @Override
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
+        //validates name
         if (name == null || name.isBlank()) {
             throw new InvalidNameException("Station name can't be blank");
         }
-
-        if (x < 0 || y <0 || x >=width || y >=height) {
+        //boundary validation
+        if (!cityMap.inBounds(x, y)) {
             throw new InvalidLocationException("Location out of bounds");
         }
-
-        if (obstacles[x][y]) {
+        //validates blocked cells
+        if (cityMap.isBlocked(x, y)) {
             throw new InvalidLocationException("Location blocked by obstacles");
         }
-
+        //validates station capacity
         if (stationCount >= MAX_STATIONS)
         {
             throw new CapacityExceededException("You cannot add more stations (max 20)")
         }
 
         Station station = new Station(nextStationId, name, x, y);
+        
         stations[stationCount++] = station;
-
-        return nextStationId++
+        return nextStationId++; 
+    }
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
