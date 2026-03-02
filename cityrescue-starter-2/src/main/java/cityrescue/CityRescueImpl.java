@@ -569,9 +569,34 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // Find incident
+    Incident incident = null;
+    for (int i = 0; i < incidentCount; i++) {
+        if (incidents[i].incidentId == incidentId) {
+            incident = incidents[i];
+            break;
+        }
     }
+
+    if (incident == null) {
+        throw new IDNotRecognisedException("Incident ID not recognised");
+    }
+
+    // Can't escalate resolved incidents
+    if(incident.status == IncidentStatus.RESOLVED) {
+        throw new IllegalStateException("Can;t escalate a resolved incident");
+    }
+
+    // Validate severity
+    if (newSeverity <= 0) {
+        throw new InvalidSeverityException("Severity must be positive");
+    }
+
+    // Update severity
+    incident.severity = newSeverity;
+    }
+
 
     @Override
     public int[] getIncidentIds() {
