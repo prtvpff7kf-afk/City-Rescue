@@ -3,7 +3,8 @@ package cityrescue;
 import cityrescue.enums.*;
 import cityrescue.exceptions.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 
 
@@ -21,23 +22,25 @@ public class CityRescueImpl implements CityRescue {
         private final int x;
         private final int y;
         
-        private int maxUnits = 0;
-        private ArrayList<Integer> unitIds = new ArrayList<>();
-        
+        private int maxUnits = Integer.MAX_VALUE;
+        private final int[] unitIds = new int[50];
+        private int UnitCount = 0;
+
         // Constructor
         Station(int stationId, String name, int x, int y) {
             this.stationId = stationId;
             this.name = name;
             this.x = x;
             this.y = y;
-            this.maxUnits = Integer.MAX_VALUE;
         }
         boolean hasCapacity() {
-            return unitIds.size() < maxUnits;
+            return unitCount < maxUnits;
         }
         void addUnit(int unitId) {
-            unitIds.add(unitId);
+            unitIDs[unitCount++] = unitId;
         }
+
+        // removeUnit (do later)
     }
 
     private static class Incident{
@@ -104,10 +107,19 @@ public class CityRescueImpl implements CityRescue {
     private int height;
     private boolean[][] obstacles;
 
-    //Storage
-    private ArrayList<Station> stations = new ArrayList<>();
-    private ArrayList<Unit> units = new ArrayList<>();
-    private ArrayList<Incident> incidents = new ArrayList<>();
+    //Storage for stations, units and incidents with arrays
+    private static final int MAX_STATIONS = 20;
+    private static final int MAX_UNITS = 50;
+    private static final int MAX_INCIDENTS = 200;
+
+    private station[] stations = new station[MAX_STATIONS];
+    private int stationCount = 0;
+
+    private Unit[] units = new Unit[MAX_UNITS];
+    private int unitCount = 0;
+
+    private Incident[] incidents = new Incident[MAX_INCIDENTS];
+    private int incidentCount = 0;
 
     //ID Counters
     private int nextStationId = 1;
@@ -126,9 +138,9 @@ public class CityRescueImpl implements CityRescue {
         this.height = height;
         obstacles = new boolean[width][height];
 
-        stations.clear();
-        units.clear();
-        incidents.clear();
+        stationCount = 0;
+        unitCount = 0;
+        incidentCount = 0;
 
         nextStationId = 1;
         nextUnitId = 1;
@@ -173,17 +185,15 @@ public class CityRescueImpl implements CityRescue {
             throw new InvalidLocationException("Location blocked by obstacles");
         }
 
-        final int MAX_STATIONS = 20;
-        if (stations.size() >= MAX_STATIONS) {
-            throw new IllegalStateException("Max number of stations reached");
+        if (stationCount >= MAX_STATIONS)
+        {
+            throw new CapacityExceededException("You cannot add more stations (max 20)")
         }
 
         Station station = new Station(nextStationId, name, x, y);
-        station.maxUnits = Integer.MAX_VALUE;
-        stations.add(station);
-        
-        return nextStationId++;
-    }
+        stations[stationCount++] = station;
+
+        return nextStationId++
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
@@ -238,10 +248,10 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        int[] ids = new int[stations.size()];
+        int[] ids = new int[stationCount]
 
-        for (int i = 0; i < stations.size(); i++) {
-            ids[i] = stations.get(i).stationId;
+        for (int i = 0; i < stationCount; i++) {
+            ids[i] = stations[i].stationId;
         }
 
         //Ascending order
@@ -258,34 +268,44 @@ public class CityRescueImpl implements CityRescue {
         if (type == null) {
             throw new InvalidUnitException("Unit type can't be null");
         }
-
-        //Find station
+        if (unitCount >= MAX_UNITS) {
+            throw new CapacityExceededException("Max number of units reached");
+        }
+        
         Station station = null;
-        for (Station s : stations) {
-            if (s.stationId == stationId) {
-                station = s;
+        for (int i = 0; i < stationCount; i++) {
+            if (station[i].stationId == stationId) {
+                station = stations[i];
                 break;
             }
         }
-        
         if (station == null) {
-            throw new IDNotRecognisedException("Station ID not recognised");
+            throw new IDNotRecognisedException("Station ID is unrecognisable"); 
+        }
+        if (!station.hasCapacity()) {
+            throw new IllegalStateException("Station is full");
+        }
+
+        int id = nextUnitId;
+
+        Unit newUnit;
+        switch (type) {
+            case AMBULANCE:
+                newUnit = new Ambulance(id, stationId, station.y, station.x);
+                break;
+            case FIRE_ENGINE:
+                newUnit = new FireEngine(id, stationId, station.y, station.x);
+                break;
+            case POLICE_CAR:
+                newUnit = new PoliceCar(id, stationId, station.y, station.x);
+                break;
+            default:
+                throw new InvalidUnitException("Invalid unit type");
         }
 
         //Check capacity
-        if (!station.hasCapacity()) {
-            throw new IllegalStateException("Station has no free capacity");
-        }
-
-        // Create unit
-        Unit newUnit = new Unit(nextUnitId, stationId, type, station.x, station.y);
-
-        //Store unit
-        units.add(newUnit);
-        station.addUnit(nextUnitId);
-
-        //Return ID
-        return nextUnitId++;
+        units[unitCount++] = newUnit;
+        station.addUnit(id);
     }
 
     @Override
