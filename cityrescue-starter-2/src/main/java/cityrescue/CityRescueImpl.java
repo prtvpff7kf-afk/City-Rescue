@@ -392,8 +392,33 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+     //Find Unit
+    Unit unit = null;
+    for (Unit u : units) {
+        if (u.unitId == unitId) {
+            unit = u;
+            break;
+        }
+    }
+        
+    if (unit == null) {
+        throw new IDNotRecognisedException("Unit ID not recognised");
+    }
+
+    //Find station
+        Station station = null;
+        for (Station s : stations) {
+            if (s.stationId == newStationId) {
+                station = s;
+                break;
+            }
+        }
+        
+        if (station == null) {
+            throw new IDNotRecognisedException("Station ID not recognised");
+        }
+
     }
 
     @Override
