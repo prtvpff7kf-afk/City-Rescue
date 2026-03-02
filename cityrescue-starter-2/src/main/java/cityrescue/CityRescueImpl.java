@@ -600,8 +600,14 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getIncidentIds() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    int[] ids = new int[incidentCount];
+
+    for (int i = 0; i < incidentCount; i++) {
+        ids[i] = incidents[i].incidentId;
+    }
+
+    return ids;
     }
 
     @Override
