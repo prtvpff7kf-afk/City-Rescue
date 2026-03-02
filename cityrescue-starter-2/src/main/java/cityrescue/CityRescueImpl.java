@@ -457,8 +457,32 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        
+        Unit unit = null;
+
+        //find unit
+        for (Unit u : units) {
+            if (u != null && u.getId() == unitId) {
+                unit = u;
+                break;
+            }
+        }
+        
+
+        //if not found
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not found");
+        }
+        
+        // if already out of service
+        if (unit.getStatus() == UnitStatus.OUT_OF_SERVICE_) {
+            throw new IllegalStateException("Unit already out of service");
+        }
+
+        //set status
+        unit.setStatus(UnitStatus.OUT_OF_SERVICE);
+        
+
     }
 
     @Override
