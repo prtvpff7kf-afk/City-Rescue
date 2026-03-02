@@ -509,8 +509,31 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // validate type
+    if (type == null) {
+        throw new IllegalArgumentException("Incident type can't be null");
+    }
+
+    // Validate location
+    if (x < 0 || y < 0 || x >= width || >= height) {
+        throw new InvalidLocationException("Incident locatiob out of bounds");
+    }
+
+    // Check max incidents
+    if (incidentCount >= MAX_INCIDENTS) {
+        throw new CapacityExceededException("Max number of incidents reached");
+    }
+
+    // Create new incident
+    int id = nextIncidentId++;
+    Incident newIncident = new Incident(id, type, severity, x, y);
+
+    // Store it
+    incidents[incidentCount++] = newIncident;
+
+    // Return incident ID
+    return id;
     }
 
     @Override
