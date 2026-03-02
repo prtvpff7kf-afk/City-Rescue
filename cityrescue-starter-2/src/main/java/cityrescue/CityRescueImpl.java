@@ -538,8 +538,33 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // Find the incident
+    int index = -1;
+    for (int i = 0; i < incidentCount; i++) {
+        if (incidents[i].incidentId == incidentId) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        throw new IDNotRecognisedException("Incident ID not recognised");
+    }
+
+    Incident inc = incidents[index];
+
+    // Can't cancel resolved incidents
+    if (inc.status == IncidentStatus.RESOLVED) {
+        throw new IllegalStateException("Can't cancel a resolved incident");
+    }
+
+    // Remove the incident
+    for (int i = index; i <incidentCount - 1; i++) {
+        incidents[i] = incidents[i +1];
+    }
+    incidents[incidentCount - 1] = null; //Clear last
+    incidentCount--;
     }
 
     @Override
