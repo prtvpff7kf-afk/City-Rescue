@@ -147,9 +147,6 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
-
-    // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
-
     //Grid
     private CityMap cityMap;
 
@@ -246,8 +243,8 @@ public class CityRescueImpl implements CityRescue {
                 break;
             }
         }
-        if (idx <= 0) {
-            throw new IllegalStateException("Station ID not recognised");
+        if (idx == -1) {
+            throw new IDNotRecognisedException("Station ID not recognised");
         }
         if (stations[idx].unitCount > 0) {
             throw new IllegalStateException("Station has units assigned");
@@ -361,12 +358,21 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         
-        //im going to rewrite your code tomorrow and do the other functions
-        //tomorrow too
-        //i did a lot today and im tired so im going to bed now
-        //goodnight
-        throw new UnsupportedOperationException("Not implemented yet");
+        int idx = -1; //index of unit to be decommissioned
+
+        //find unit
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                idx = i;
+                break;
+            }
     }
+    // existence check
+    if (idx == -1) {
+        throw new IDNotRecognisedException("Unit ID not recognised");
+    }
+
+    Unit unit = units[idx];
 
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
