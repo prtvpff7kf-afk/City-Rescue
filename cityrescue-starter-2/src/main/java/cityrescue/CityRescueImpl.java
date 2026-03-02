@@ -17,14 +17,18 @@ import java.util.ArrayList;
 public class CityRescueImpl implements CityRescue {
 
     private static class Station{
+
+        //attributes
         private final int stationId;
         private final String name;
         private final int x;
         private final int y;
         
         private int maxUnits = Integer.MAX_VALUE;
+
+        // unit IDs assigned to this station (max 50)
         private final int[] unitIds = new int[50];
-        private int UnitCount = 0;
+        private int unitCount = 0;
 
         // Constructor
         Station(int stationId, String name, int x, int y) {
@@ -37,13 +41,15 @@ public class CityRescueImpl implements CityRescue {
             return unitCount < maxUnits;
         }
         void addUnit(int unitId) {
-            unitIDs[unitCount++] = unitId;
+            unitIds[unitCount++] = unitId;
         }
 
         // removeUnit (do later)
     }
 
     private static class Incident{
+
+        //attributers
         IncidentType type;
         IncidentStatus status;
         int severity;
@@ -51,6 +57,8 @@ public class CityRescueImpl implements CityRescue {
         int y;
         int incidentId;
         int assignedUnitId = -1; //no unit on the job
+
+        //constructor
         public Incident(int incidentId, IncidentType type, int severity, int x, int y) {
             this.incidentId = incidentId;
             this.type = type;
@@ -63,11 +71,15 @@ public class CityRescueImpl implements CityRescue {
 
     //unit superclass
     private static abstract class Unit{
+
+        //super attributes
         int unitId;
         int stationId;
         UnitType type;
         int x;
         int y;
+
+        //moving to incidents
         int targetX;
         int targetY;
         int workTimeLeft;
@@ -78,8 +90,9 @@ public class CityRescueImpl implements CityRescue {
         boolean outOfService = false;
         int assignedIncidentId = -1;
 
-        // constructor
+        // super constructor
         Unit(int unitId, int stationId, UnitType type, int x, int y) {
+
             this.unitId = unitId;
             this.stationId = stationId;
             this.type = type;
@@ -89,6 +102,7 @@ public class CityRescueImpl implements CityRescue {
             this.targetY = y;
         }
 
+        //inherited methods to override
         abstract boolean canHandle(IncidentType incidentType);
         abstract int getWorkTime(int severity);
     }
@@ -98,6 +112,7 @@ public class CityRescueImpl implements CityRescue {
         Ambulance(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.AMBULANCE, x, y);
         }
+        //polymorphism
         @Override boolean canHandle(IncidentType incidentType) {
             return incidentType == IncidentType.MEDICAL;
         }
@@ -110,6 +125,7 @@ public class CityRescueImpl implements CityRescue {
         FireEngine(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.FIRE_ENGINE, x, y);
         }
+        //polymorphism
         @Override boolean canHandle(IncidentType incidentType) {
             return incidentType == IncidentType.FIRE;
         }
@@ -122,6 +138,7 @@ public class CityRescueImpl implements CityRescue {
         PoliceCar(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.POLICE_CAR, x, y);
         }
+        //polymorphism
         @Override boolean canHandle(IncidentType incidentType) {
             return incidentType == IncidentType.CRIME;
         }
@@ -134,9 +151,7 @@ public class CityRescueImpl implements CityRescue {
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
 
     //Grid
-    private int width;
-    private int height;
-    private boolean[][] obstacles;
+    private CityMap cityMap
 
     //Storage for stations, units and incidents with arrays
     private static final int MAX_STATIONS = 20;

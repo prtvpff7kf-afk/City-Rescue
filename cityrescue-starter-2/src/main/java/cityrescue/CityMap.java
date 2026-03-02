@@ -44,13 +44,19 @@ public class CityMap {
         if (!inBounds(x, y)) {
             throw new InvalidLocationException("Coordinates out of bounds.");
         }
+        if (isBlocked(x, y)) {
+            throw new InvalidLocationException("Cell is already blocked.");
+        }
         blockedCells[x][y] = true;
     }
 
-     //removes obstacle
-     public void removeObstacle(int x, int y) throws InvalidLocationException {
+    //removes obstacle
+    public void removeObstacle(int x, int y) throws InvalidLocationException {
         if (!inBounds(x, y)) {
             throw new InvalidLocationException("Coordinates out of bounds.");
+        }
+        if (!isBlocked(x, y)) {
+            throw new InvalidLocationException("Cell is not blocked.");
         }
         blockedCells[x][y] = false;
     }
