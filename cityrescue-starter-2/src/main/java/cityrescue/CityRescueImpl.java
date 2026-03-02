@@ -236,24 +236,28 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
-        // Find station
-        Station targetStation = null;
-        for (Station s : stations) {
-            if (s.stationId == stationId) {
-                targetStation = s;
+       
+        int idx = -1; //index of station to remove
+
+        //find station
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == stationId) {
+                idx = i;
                 break;
             }
         }
-        if (targetStation == null) {
+        if (idx <= 0) {
             throw new IllegalStateException("Station ID not recognised");
         }
-        //Check it has no units
-        if (!targetStation.unitIds.isEmpty()) {
-            throw new IllegalStateException("Station still has units assigned");
+        if (stations[idx].unitCount > 0) {
+            throw new IllegalStateException("Station has units assigned");
         }
-
-        // Remove station
-        stations.remove(targetStation);
+        //removal of stations by shifting array left
+        for (int i = idx; i < stationCount - 1; i++) {
+            stations[i] = stations[i + 1];
+        }
+        stations[stationCount - 1] = null; // clear last element
+        stationCount--; //decrement
     }
 
     @Override
@@ -261,22 +265,23 @@ public class CityRescueImpl implements CityRescue {
         
         // Find station
         Station targetStation = null;
-        for (Station s : stations) {
-            if (s.stationId == stationId) {
-                targetStation = s;
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == stationId) {
+                targetStation = stations[i];
                 break;
             }
         }
+        // existence check
         if (targetStation == null) {
-            throw new IllegalStateException("Station ID not recognised");
+            throw new IDNotRecognisedException("Station ID not recognised");
         }
         
         // Validate maxUnits
         if (maxUnits <= 0) {
-            throw new IDNotRecognisedException("Capacity must be positive");
+            throw new InvalidCapacityException("Capacity must be positive");
         }
 
-        if (maxUnits < targetStation.unitIds.size()) {
+        if (maxUnits < targetStation.unitCount) {
             throw new InvalidCapacityException("Capacity can't be less than current number of units");
         }
 
@@ -287,15 +292,17 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        int[] ids = new int[stationCount]
+        
+        //get station IDs in an array
+        int[] ids = new int[stationCount];
 
+        //store station IDs in array called ids
         for (int i = 0; i < stationCount; i++) {
             ids[i] = stations[i].stationId;
         }
 
         //Ascending order
         Arrays.sort(ids);
-
         return ids;
     }
 
@@ -313,7 +320,7 @@ public class CityRescueImpl implements CityRescue {
         
         Station station = null;
         for (int i = 0; i < stationCount; i++) {
-            if (station[i].stationId == stationId) {
+            if (stations[i].stationId == stationId) {
                 station = stations[i];
                 break;
             }
@@ -328,6 +335,7 @@ public class CityRescueImpl implements CityRescue {
         int id = nextUnitId;
 
         Unit newUnit;
+        //switch case for different unit types,
         switch (type) {
             case AMBULANCE:
                 newUnit = new Ambulance(id, stationId, station.y, station.x);
@@ -353,34 +361,11 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         
-        //Find Unit
-        Unit unit = null;
-        for (Unit u : units) {
-            if (u.unitId == unitId) {
-                unit = u;
-                break;
-            }
-        }
-        
-        if (unit == null) {
-            throw new IDNotRecognisedException("Unit ID not recognised");
-        }
-
-        //Check if unit is currently busy
-        if (unit.assignedIncidentId != -1) {
-            throw new IllegalStateException("Unit is currently assigned to an incident");
-        }
-
-        //Remove from its station
-        for (Station s : stations) {
-            if (s.stationId == unit.stationId) {
-                s.unitIds.remove(Integer.valueOf(unitId));
-                break;
-            }
-        }
-
-         //Remove from system
-        units.remove(unit);
+        //im going to rewrite your code tomorrow and do the other functions
+        //tomorrow too
+        //i did a lot today and im tired so im going to bed now
+        //goodnight
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
