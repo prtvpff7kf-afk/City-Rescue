@@ -636,8 +636,30 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void dispatch() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    for (int i =0; i < incidentCount; i++) {
+        Incident incident = incidents[i];
+
+        // Only assign if still waiting
+        if (incident.status == IncidentStatus.REPORTED) {
+            for (int j = 0; j < unitCount; j++) [
+                Unit unit = units[j];
+
+                //Check if unit is available
+                if (!unit.outOfService && unit.assignedIncidentId == -1) {
+
+                    //Assigned unit
+                    unit.assignedIncidentId = incident.incidentId;
+                    incident.assignedUnitId = unit.unitId;
+
+                    // Update status
+                    incident.status = IncidentStatus.IN_PROGRESS;
+
+                    break;
+                }
+            ]
+        }
+    }
     }
 
     @Override
