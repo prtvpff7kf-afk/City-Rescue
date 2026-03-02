@@ -50,6 +50,7 @@ public class CityRescueImpl implements CityRescue {
         int x;
         int y;
         int incidentId;
+        int assignedUnitId = -1; //no unit on the job
         public Incident(int incidentId, IncidentType type, int severity, int x, int y) {
             this.incidentId = incidentId;
             this.type = type;
@@ -61,12 +62,16 @@ public class CityRescueImpl implements CityRescue {
     }
 
     //unit superclass
-    private static class Unit{
+    private static abstract class Unit{
         int unitId;
         int stationId;
         UnitType type;
         int x;
         int y;
+        int targetX;
+        int targetY;
+        int workTimeLeft;
+
         UnitStatus status = UnitStatus.IDLE;
         Integer incidentId = null;
 
@@ -80,7 +85,12 @@ public class CityRescueImpl implements CityRescue {
             this.type = type;
             this.x = x;
             this.y = y;
+            this.targetX = x;
+            this.targetY = y;
         }
+
+        abstract boolean canHandle(IncidentType incidentType);
+        abstract int getWorkTime(int severity);
     }
 
     //Subclasses for each unit
@@ -88,17 +98,35 @@ public class CityRescueImpl implements CityRescue {
         Ambulance(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.AMBULANCE, x, y);
         }
+        @Override boolean canHandle(IncidentType incidentType) {
+            return incidentType == IncidentType.MEDICAL;
+        }
+        @Override int getWorkTime(int severity) {
+            return 2;
+        }
     }
 
     private class FireEngine extends Unit {
         FireEngine(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.FIRE_ENGINE, x, y);
         }
+        @Override boolean canHandle(IncidentType incidentType) {
+            return incidentType == IncidentType.FIRE;
+        }
+        @Override int getWorkTime(int severity) {
+            return 4;
+        }
     }
 
     private class PoliceCar extends Unit {
         PoliceCar(int unitId, int stationId, int x, int y) {
             super(unitId, stationId, UnitType.POLICE_CAR, x, y);
+        }
+        @Override boolean canHandle(IncidentType incidentType) {
+            return incidentType == IncidentType.CRIME;
+        }
+        @Override int getWorkTime(int severity) {
+            return 3;
         }
     }
 
@@ -306,9 +334,12 @@ public class CityRescueImpl implements CityRescue {
                 throw new InvalidUnitException("Invalid unit type");
         }
 
-        //Check capacity
         units[unitCount++] = newUnit;
         station.addUnit(id);
+        
+        // increment unit id
+        nextUnitId++;
+        return id;
     }
 
     @Override
