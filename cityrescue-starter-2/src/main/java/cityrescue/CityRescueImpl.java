@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 
 
+
 /**
  * CityRescueImpl (Starter)
  *
@@ -302,7 +303,7 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        int[] ids = new int[stationCount]
+        int[] ids = new int[stationCount];
 
         for (int i = 0; i < stationCount; i++) {
             ids[i] = stations[i].stationId;
