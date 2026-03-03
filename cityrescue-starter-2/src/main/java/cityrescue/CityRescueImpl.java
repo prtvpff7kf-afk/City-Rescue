@@ -4,7 +4,7 @@ import cityrescue.enums.*;
 import cityrescue.exceptions.*;
 
 import java.util.Arrays;
-import java.util.ArrayList;
+
 
 
 
@@ -44,7 +44,16 @@ public class CityRescueImpl implements CityRescue {
             unitIds[unitCount++] = unitId;
         }
 
-        // removeUnit (do later)
+        // removeUnit
+        void removeUnit(int unitId) {
+            for (int i = 0; i < unitCount; i++) {
+                if (unitIds[i] == unitId) {
+                    unitIds[i] = unitIds[unitCount - 1];
+                    unitCount--;
+                    return;
+                }
+            }
+        }
     }
 
     private static class Incident{
@@ -219,7 +228,7 @@ public class CityRescueImpl implements CityRescue {
         if (cityMap.isBlocked(x, y)) {
             throw new InvalidLocationException("Location blocked by obstacles");
         }
-        //validates station capacity
+
         if (stationCount >= MAX_STATIONS)
         {
             throw new CapacityExceededException("You cannot add more stations (max 20)")
@@ -228,8 +237,8 @@ public class CityRescueImpl implements CityRescue {
         Station station = new Station(nextStationId, name, x, y);
         
         stations[stationCount++] = station;
-        return nextStationId++; 
-    }
+
+        return nextStationId++
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
@@ -289,11 +298,8 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        
-        //get station IDs in an array
-        int[] ids = new int[stationCount];
+        int[] ids = new int[stationCount]
 
-        //store station IDs in array called ids
         for (int i = 0; i < stationCount; i++) {
             ids[i] = stations[i].stationId;
         }
@@ -376,9 +382,59 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+     //Find Unit
+    Unit unit = null;
+    for (Unit u : units) {
+        if (u.unitId == unitId) {
+            unit = u;
+            break;
+        }
     }
+        
+    if (unit == null) {
+        throw new IDNotRecognisedException("Unit ID not recognised");
+    }
+
+    //Find station
+    Station newStation = null;
+        for (Station s : stations) {
+            if (s.stationId == newStationId) {
+                newStation = s;
+                break;
+            }
+        }
+        
+    if (newStation == null) {
+        throw new IDNotRecognisedException("Station ID not recognised");
+    }
+        
+    // Can't transfer if assigned to incident
+    if (unit.assignedIncidentId != -1) {
+        throw new IllegalStateException("Unit is assigned to an incident");
+    }
+
+    //Check capacity
+    if (!newStation.hasCapacity()) {
+        throw new IllegalStateException("New station is full");
+    }
+
+    //Remove from old station
+    for (Station s : stations) {
+            if (s.stationId == unit.stationId) {
+                s.removeUnit(unitId);
+                break;
+            }
+        }
+
+    // Add to new station
+    newStation.addUnit(unitId);;
+
+    //Update unit
+    unit.stationId = newStationId;
+    }
+
+
 
     @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
@@ -446,3 +502,4 @@ public class CityRescueImpl implements CityRescue {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }
+
