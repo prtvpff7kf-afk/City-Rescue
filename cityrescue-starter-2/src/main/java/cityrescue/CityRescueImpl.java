@@ -16,6 +16,8 @@ import java.util.Arrays;
  */
 public class CityRescueImpl implements CityRescue {
 
+
+
     private static class Station{
 
         //attributes
@@ -438,56 +440,207 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        
+        Unit unit = null;
+
+        //find unit
+        for (Unit u : units) {
+            if (u != null && u.getId() == unitId) {
+                unit = u;
+                break;
+            }
+        }
+        
+
+        //if not found
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not found");
+        }
+        
+        // if already out of service
+        if (unit.getStatus() == UnitStatus.OUT_OF_SERVICE_) {
+            throw new IllegalStateException("Unit already out of service");
+        }
+
+        //set status
+        unit.setStatus(UnitStatus.OUT_OF_SERVICE);
+        
+
     }
 
     @Override
     public int[] getUnitIds() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        return gridSize;
     }
 
     @Override
     public String viewUnit(int unitId) throws IDNotRecognisedException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+        for (Unit u : units) {
+            if (u.unitId == unitId) {
+                return "Unit" + u.unitId +
+                " | Type: " u.type +
+                " | Station " + u.stationId +
+                " | Incident: " + u.assignedIncidentId;
+            }
+        }
+
+        throw new IDNotRecognisedException("Unit ID not recognised");
     }
 
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // validate type
+    if (type == null) {
+        throw new IllegalArgumentException("Incident type can't be null");
+    }
+
+    // Validate location
+    if (x < 0 || y < 0 || x >= width || >= height) {
+        throw new InvalidLocationException("Incident locatiob out of bounds");
+    }
+
+    // Check max incidents
+    if (incidentCount >= MAX_INCIDENTS) {
+        throw new CapacityExceededException("Max number of incidents reached");
+    }
+
+    // Create new incident
+    int id = nextIncidentId++;
+    Incident newIncident = new Incident(id, type, severity, x, y);
+
+    // Store it
+    incidents[incidentCount++] = newIncident;
+
+    // Return incident ID
+    return id;
     }
 
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // Find the incident
+    int index = -1;
+    for (int i = 0; i < incidentCount; i++) {
+        if (incidents[i].incidentId == incidentId) {
+            index = i;
+            break;
+        }
+    }
+
+    if (index == -1) {
+        throw new IDNotRecognisedException("Incident ID not recognised");
+    }
+
+    Incident inc = incidents[index];
+
+    // Can't cancel resolved incidents
+    if (inc.status == IncidentStatus.RESOLVED) {
+        throw new IllegalStateException("Can't cancel a resolved incident");
+    }
+
+    // Remove the incident
+    for (int i = index; i <incidentCount - 1; i++) {
+        incidents[i] = incidents[i +1];
+    }
+    incidents[incidentCount - 1] = null; //Clear last
+    incidentCount--;
     }
 
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    // Find incident
+    Incident incident = null;
+    for (int i = 0; i < incidentCount; i++) {
+        if (incidents[i].incidentId == incidentId) {
+            incident = incidents[i];
+            break;
+        }
     }
+
+    if (incident == null) {
+        throw new IDNotRecognisedException("Incident ID not recognised");
+    }
+
+    // Can't escalate resolved incidents
+    if(incident.status == IncidentStatus.RESOLVED) {
+        throw new IllegalStateException("Can;t escalate a resolved incident");
+    }
+
+    // Validate severity
+    if (newSeverity <= 0) {
+        throw new InvalidSeverityException("Severity must be positive");
+    }
+
+    // Update severity
+    incident.severity = newSeverity;
+    }
+
 
     @Override
     public int[] getIncidentIds() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    int[] ids = new int[incidentCount];
+
+    for (int i = 0; i < incidentCount; i++) {
+        ids[i] = incidents[i].incidentId;
+    }
+
+    return ids;
     }
 
     @Override
     public String viewIncident(int incidentId) throws IDNotRecognisedException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    Incident incident = null;
+
+    for (int i = 0;; i < incidentCount; i++) {
+        if (incidents[i].incidentId == incidentId) {
+            incident = incidents[i];
+            break;
+        }
+    }
+
+    if (incident == null) {
+        throw new IDNotRecognisedException("Incident ID not recognised");
+    }
+
+    return "Incident ID: " + incident.incidentId +
+        ", Type: " + incident.type + 
+        ", Location: (" + incident.x +"," + incident.y + ")" +
+        ", Status: " + incident.status +
+        ", Assigned Unit: " +
+        (incident.assignedUnitId == -1 ? "None" : incident.assignedUnitId);
     }
 
     @Override
     public void dispatch() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+    
+    for (int i =0; i < incidentCount; i++) {
+        Incident incident = incidents[i];
+
+        // Only assign if still waiting
+        if (incident.status == IncidentStatus.REPORTED) {
+            for (int j = 0; j < unitCount; j++) [
+                Unit unit = units[j];
+
+                //Check if unit is available
+                if (!unit.outOfService && unit.assignedIncidentId == -1) {
+
+                    //Assigned unit
+                    unit.assignedIncidentId = incident.incidentId;
+                    incident.assignedUnitId = unit.unitId;
+
+                    // Update status
+                    incident.status = IncidentStatus.IN_PROGRESS;
+
+                    break;
+                }
+            ]
+        }
+    }
     }
 
     @Override
