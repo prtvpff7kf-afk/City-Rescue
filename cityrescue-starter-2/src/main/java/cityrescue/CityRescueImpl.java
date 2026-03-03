@@ -514,49 +514,70 @@ public class CityRescueImpl implements CityRescue {
         return ids;
     }
 
-    @Override
+    @Override //do this one
     public String viewUnit(int unitId) throws IDNotRecognisedException {
     
-        for (Unit u : units) {
-            if (u.unitId == unitId) {
-                return "Unit" + u.unitId +
-                " | Type: " u.type +
-                " | Station " + u.stationId +
-                " | Incident: " + u.assignedIncidentId;
+        Unit unit = null;
+
+        //find unit
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                unit = units[i];
+                break;
             }
         }
 
-        throw new IDNotRecognisedException("Unit ID not recognised");
+        //existence check
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not recognised");
+        }
+
+        // building string
+        String incidentPart = (unit.incidentId == null) ? "-" : String.valueOf(unit.incidentId);
+
+        //returned format
+        String results = "U#" + unit.unitId +
+            "TYPE: " + unit.type +
+            "HOME: " + unit.stationId +
+            "LOC: (" + unit.x + "," + unit.y + ")" +
+            "STATUS: " + unit.status +
+            "INCIDENT: " + incidentPart;
+        return results;
     }
 
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
     
-    // validate type
-    if (type == null) {
-        throw new IllegalArgumentException("Incident type can't be null");
-    }
+        // validate type
+        if (type == null) {
+            throw new IllegalArgumentException("Incident type can't be null");
+        }
 
-    // Validate location
-    if (x < 0 || y < 0 || x >= width || >= height) {
-        throw new InvalidLocationException("Incident locatiob out of bounds");
-    }
+        // Validate location
+        if (!cityMap.inBounds(x, y)) {
+            throw new InvalidLocationException("Location out of bounds");
+        }
 
-    // Check max incidents
-    if (incidentCount >= MAX_INCIDENTS) {
-        throw new CapacityExceededException("Max number of incidents reached");
-    }
+        // is cell blocked check
+        if (cityMap.isBlocked(x, y)) {
+            throw new InvalidLocationException("Location blocked by obstacles");
+        }
 
-    // Create new incident
-    int id = nextIncidentId++;
-    Incident newIncident = new Incident(id, type, severity, x, y);
+        // Check max incidents
+        if (incidentCount >= MAX_INCIDENTS) {
+            throw new CapacityExceededException("Max number of incidents reached");
+        }
 
-    // Store it
-    incidents[incidentCount++] = newIncident;
+        // Create new incident
+        int id = nextIncidentId++;
+        Incident newIncident = new Incident(id, type, severity, x, y);
 
-    // Return incident ID
-    return id;
-    }
+        // Store it
+        incidents[incidentCount++] = newIncident;
+
+        // Return incident ID
+        return id;
+        }
 
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
@@ -592,102 +613,164 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
     
-    // Find incident
-    Incident incident = null;
-    for (int i = 0; i < incidentCount; i++) {
-        if (incidents[i].incidentId == incidentId) {
-            incident = incidents[i];
-            break;
+        // Find incident
+        Incident incident = null;
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i].incidentId == incidentId) {
+                incident = incidents[i];
+                break;
+            }
         }
-    }
 
-    if (incident == null) {
-        throw new IDNotRecognisedException("Incident ID not recognised");
-    }
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
 
-    // Can't escalate resolved incidents
-    if(incident.status == IncidentStatus.RESOLVED) {
-        throw new IllegalStateException("Can;t escalate a resolved incident");
-    }
+        // Can't escalate resolved incidents
+        if(incident.status == IncidentStatus.RESOLVED) {
+            throw new IllegalStateException("Can;t escalate a resolved incident");
+        }
 
-    // Validate severity
-    if (newSeverity <= 0) {
-        throw new InvalidSeverityException("Severity must be positive");
-    }
+        // Validate severity
+        if (newSeverity <= 0) {
+            throw new InvalidSeverityException("Severity must be positive");
+        }
+        if (incident.status == IncidentStatus.RESOLVED || incident.status == IncidentStatus.CANCELLED) {
+            throw new IllegalStateException("Can't escalate resolved/cancelled incidents");
+        }
 
-    // Update severity
-    incident.severity = newSeverity;
+        // Update severity
+        incident.severity = newSeverity;
     }
 
 
     @Override
     public int[] getIncidentIds() {
     
-    int[] ids = new int[incidentCount];
+        //create arrays
+        int[] ids = new int[incidentCount];
 
-    for (int i = 0; i < incidentCount; i++) {
-        ids[i] = incidents[i].incidentId;
-    }
+        //fill array with every id
+        for (int i = 0; i < incidentCount; i++) {
+            ids[i] = incidents[i].incidentId;
+        }
 
-    return ids;
+        //sort and return
+        Arrays.sort(ids);
+        return ids;
     }
 
     @Override
     public String viewIncident(int incidentId) throws IDNotRecognisedException {
     
-    Incident incident = null;
+        Incident incident = null;
 
-    for (int i = 0;; i < incidentCount; i++) {
-        if (incidents[i].incidentId == incidentId) {
-            incident = incidents[i];
-            break;
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i].incidentId == incidentId) {
+                incident = incidents[i];
+                break;
+            }
         }
-    }
 
-    if (incident == null) {
-        throw new IDNotRecognisedException("Incident ID not recognised");
-    }
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
 
-    return "Incident ID: " + incident.incidentId +
-        ", Type: " + incident.type + 
-        ", Location: (" + incident.x +"," + incident.y + ")" +
-        ", Status: " + incident.status +
-        ", Assigned Unit: " +
-        (incident.assignedUnitId == -1 ? "None" : incident.assignedUnitId);
-    }
+        return "Incident ID: " + incident.incidentId +
+            ", Type: " + incident.type + 
+            ", Location: (" + incident.x +"," + incident.y + ")" +
+            ", Status: " + incident.status +
+            ", Assigned Unit: " +
+            (incident.assignedUnitId == -1 ? "None" : incident.assignedUnitId);
+        }
 
     @Override
     public void dispatch() {
     
-    for (int i =0; i < incidentCount; i++) {
-        Incident incident = incidents[i];
+        for (int i =0; i < incidentCount; i++) {
+            Incident incident = incidents[i];
 
-        // Only assign if still waiting
-        if (incident.status == IncidentStatus.REPORTED) {
-            for (int j = 0; j < unitCount; j++) [
-                Unit unit = units[j];
+            // Only assign if still waiting
+            if (incident.status == IncidentStatus.REPORTED) {
+                for (int j = 0; j < unitCount; j++) {
+                    Unit unit = units[j];
 
-                //Check if unit is available
-                if (!unit.outOfService && unit.assignedIncidentId == -1) {
+                    //Check if unit is available
+                    if (!unit.outOfService && unit.assignedIncidentId == -1) {
 
-                    //Assigned unit
-                    unit.assignedIncidentId = incident.incidentId;
-                    incident.assignedUnitId = unit.unitId;
+                        //Assigned unit
+                        unit.assignedIncidentId = incident.incidentId;
+                        incident.assignedUnitId = unit.unitId;
 
-                    // Update status
-                    incident.status = IncidentStatus.IN_PROGRESS;
+                        // Update status
+                        incident.status = IncidentStatus.IN_PROGRESS;
 
-                    break;
+                        break;
+                    }
                 }
-            ]
+            }
         }
-    }
     }
 
     @Override
     public void tick() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        currentTick++;
+
+        //start moving units in ascending id order
+        int[] unitIds = getUnitIds();
+        for (int finalUnitId : unitIds) {
+            Unit unit = null;
+            for (int i = 0; i < unitCount; i++) {
+                if (units[i].unitId == finalUnitId) {
+                    unit = units[i];
+                    break;
+                }
+            }
+
+            if (unit == null || unit.status != UnitStatus.EN_ROUTE) 
+                continue;
+            
+            int currentDistance = Math.abs(unit.x - unit.targetX) + Math.abs(unit.y - unit.targetY);
+            
+            //directions NESW
+            int[] dx = {0, 1, 0, -1}; 
+            int[] dy = {1, 0, -1, 0};
+
+            int bestX = unit.x;
+            int bestY = unit.y;
+            boolean foundReducing = false;
+
+            for (int k = 0; k < 4; k++) {
+                int newX = unit.x + dx[k];
+                int newY = unit.y + dy[k];
+                if (cityMap.inBounds(newX, newY) && !cityMap.isBlocked(newX, newY)) {
+                    int newDistance = Math.abs(newX - unit.targetX) + Math.abs(newY - unit.targetY);
+                    if (newDistance < currentDistance) {
+                        bestX = newX;
+                        bestY = newY;
+                        foundReducing = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!foundReducing) {
+                for (int k = 0; k < 4; k++) {
+                    int newX = unit.x + dx[k];
+                    int newY = unit.y + dy[k];
+                    if (cityMap.inBounds(newX, newY) && !cityMap.isBlocked(newX, newY)) {
+                        bestX = newX;
+                        bestY = newY;
+                        break;
+                    }
+                }
+            }
+            unit.x = bestX;
+            unit.y = bestY;
+        }
+
+        // work at incidents
+        for (int i = 0;)
     }
 
     @Override
