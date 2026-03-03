@@ -61,4 +61,17 @@ public class CityMap {
         blockedCells[x][y] = false;
     }
 
+    //obstacle count
+    public int countObstacles() {
+        int count = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                if (blockedCells[x][y]) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
 }

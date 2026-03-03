@@ -770,13 +770,113 @@ public class CityRescueImpl implements CityRescue {
         }
 
         // work at incidents
-        for (int i = 0;)
+        for (int i = 0; i < unitCount; i++) {
+            Unit unit = units[i];
+            if (unit.status != UnitStatus.EN_ROUTE)
+                continue;
+
+            if (unit.x == unit.targetX && unit.y == unit.targetY) {
+                Incident incident = null;
+                if (unit.incidentId != null) {
+                    for (int j = 0; j < incidentCount; j++) {
+                        if (incidents[j].incidentId == unit.incidentId) {
+                            incident = incidents[j];
+                            break;
+                        }
+                    }
+
+                    unit.status = UnitStatus.AT_SCENE;
+
+                    //inprogress
+                    if (incident != null && incident.status == IncidentStatus.DISPATCHED) {
+                        incident.status = IncidentStatus.IN_PROGRESS;
+                        unit.workTimeLeft = unit.getWorkTime(incident.severity);
+                    }
+                }
+            }
+        }
+        // work time decrement
+        for (int i = 0; i < unitCount; i++) {
+            Unit unit = units[i];
+            if (unit.status == UnitStatus.AT_SCENE && unit.workTimeLeft > 0) {                    unit.workTimeLeft--;
+                }
+            }
+
+        // check for incidents that are resolved
+        int[] incidentIds = getIncidentIds();
+        for (int incidentId : incidentIds) {
+            Incident incident = null;
+            for (int i = 0; i < incidentCount; i++) {
+                if (incidents[i].incidentId == incidentId) {
+                    incident = incidents[i];
+                    break;
+                }
+            }
+
+            if (incident != null && incident.status != IncidentStatus.IN_PROGRESS) {
+                if (incident.assignedUnitId == -1) {
+
+                    Unit unit = null;
+                    for (int i = 0; i < unitCount; i++) {
+                        if (units[i].unitId == incident.assignedUnitId) {
+                            unit = units[i];
+                            break;
+                        }
+                    }
+
+                    if (unit != null && unit.status == UnitStatus.AT_SCENE && unit.workTimeLeft == 0) {
+                        incident.status = IncidentStatus.RESOLVED;
+                        incident.assignedUnitId = -1;
+                        unit.incidentId = null;
+                        unit.status = UnitStatus.IDLE;
+                        unit.targetX = unit.x;
+                        unit.targetY = unit.y;
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public String getStatus() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("TICK=").append(currentTick).append("\n");
+        sb.append("STATIONS=").append(stationCount)
+            .append("UNITS=").append(unitCount)
+            .append("INCIDENTS=").append(incidentCount)
+            .append("OBSTACLES=").append(cityMap.countObstacles())
+            .append("\n");
+        
+        //lists all the incidents
+        sb.append("INCIDENTS\n");
+        int[] incidentIds = getIncidentIds();
+        for (int id : incidentIds) {
+            try {
+                sb.append(viewIncident(id)).append("\n");
+            } 
+            catch (Exception ignoredException) {
+
+            }
+        }
+
+        //list all the units
+        sb.append("UNITS\n");
+        int[] unitIds = getUnitIds();
+        for (int id : unitIds) {
+            try {
+                sb.append(viewUnit(id)).append("\n");
+            } 
+            catch (Exception ignoredException) {
+
+            }
+        }
+        //return string nicely
+        if (sb.length() > 0) {
+            sb.setLength(sb.length() - 1); // Remove last newline
+        }
+
+        return sb.toString();
     }
 }
 
