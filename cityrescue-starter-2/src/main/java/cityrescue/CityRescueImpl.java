@@ -50,7 +50,11 @@ public class CityRescueImpl implements CityRescue {
         void removeUnit(int unitId) {
             for (int i = 0; i < unitCount; i++) {
                 if (unitIds[i] == unitId) {
-                    unitIds[i] = unitIds[unitCount - 1];
+
+                    // shift left to remove unit 
+                    for (int j = i; j < unitCount - 1; j++) {
+                        unitIds[j] = unitIds[j + 1];
+                    }
                     unitCount--;
                     return;
                 }
@@ -233,14 +237,15 @@ public class CityRescueImpl implements CityRescue {
 
         if (stationCount >= MAX_STATIONS)
         {
-            throw new CapacityExceededException("You cannot add more stations (max 20)")
+            throw new CapacityExceededException("You cannot add more stations (max 20)");
         }
 
         Station station = new Station(nextStationId, name, x, y);
         
         stations[stationCount++] = station;
 
-        return nextStationId++
+        return nextStationId++;
+    };
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
@@ -300,7 +305,7 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getStationIds() {
-        int[] ids = new int[stationCount]
+        int[] ids = new int[stationCount];
 
         for (int i = 0; i < stationCount; i++) {
             ids[i] = stations[i].stationId;
@@ -343,13 +348,13 @@ public class CityRescueImpl implements CityRescue {
         //switch case for different unit types,
         switch (type) {
             case AMBULANCE:
-                newUnit = new Ambulance(id, stationId, station.y, station.x);
+                newUnit = new Ambulance(id, stationId, station.x, station.y);
                 break;
             case FIRE_ENGINE:
-                newUnit = new FireEngine(id, stationId, station.y, station.x);
+                newUnit = new FireEngine(id, stationId, station.x, station.y);
                 break;
             case POLICE_CAR:
-                newUnit = new PoliceCar(id, stationId, station.y, station.x);
+                newUnit = new PoliceCar(id, stationId, station.x, station.y);
                 break;
             default:
                 throw new InvalidUnitException("Invalid unit type");
@@ -366,7 +371,7 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         
-        int idx = -1; //index of unit to be decommissioned
+        int idx = -1;
 
         //find unit
         for (int i = 0; i < unitCount; i++) {
@@ -374,103 +379,139 @@ public class CityRescueImpl implements CityRescue {
                 idx = i;
                 break;
             }
-    }
-    // existence check
-    if (idx == -1) {
-        throw new IDNotRecognisedException("Unit ID not recognised");
-    }
+        }
+        //existance check
+        if (idx == -1) {
+            throw new IDNotRecognisedException("Unit ID not recognised");
+        }
 
-    Unit unit = units[idx];
+        //prevents decommissioning active units
+        Unit unit = units[idx];
+        if (unit.status == UnitStatus.EN_ROUTE || unit.status == UnitStatus.AT_SCENE) {
+            throw new IllegalStateException("Unit is currently assigned to an incident");
+        }
+
+        // Remove unit from its assigned station
+        for (int s = 0; s < stationCount; s++) {
+            if (stations[s].stationId == unit.stationId) {
+                stations[s].removeUnit(unit.unitId);
+                break;
+            }
+        }
+
+        // Remove from unit array by shifting
+        for (int i = idx; i < unitCount - 1; i++) {
+            units[i] = units[i + 1];
+            units[unitCount - 1] = null;
+            unitCount--;
+        }
+    }
 
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
     
-     //Find Unit
-    Unit unit = null;
-    for (Unit u : units) {
-        if (u.unitId == unitId) {
-            unit = u;
-            break;
-        }
-    }
-        
-    if (unit == null) {
-        throw new IDNotRecognisedException("Unit ID not recognised");
-    }
+        Unit unit = null;
 
-    //Find station
-    Station newStation = null;
-        for (Station s : stations) {
-            if (s.stationId == newStationId) {
-                newStation = s;
-                break;
-            }
-        }
-        
-    if (newStation == null) {
-        throw new IDNotRecognisedException("Station ID not recognised");
-    }
-        
-    // Can't transfer if assigned to incident
-    if (unit.assignedIncidentId != -1) {
-        throw new IllegalStateException("Unit is assigned to an incident");
-    }
-
-    //Check capacity
-    if (!newStation.hasCapacity()) {
-        throw new IllegalStateException("New station is full");
-    }
-
-    //Remove from old station
-    for (Station s : stations) {
-            if (s.stationId == unit.stationId) {
-                s.removeUnit(unitId);
+        // Find unit
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                unit = units[i];
                 break;
             }
         }
 
-    // Add to new station
-    newStation.addUnit(unitId);;
+        // Existence check for unit
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not recognised");
+        }
+        
+        Station newStation = null;
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == newStationId) {
+                newStation = stations[i];
+                break;
+            }
+        }
 
-    //Update unit
-    unit.stationId = newStationId;
+        // Existance check for station
+        if (newStation == null) {
+            throw new IDNotRecognisedException("New station ID not recognised");
+        }
+
+        // only idle units can be transferred
+        if (unit.status != UnitStatus.IDLE) {
+            throw new IllegalStateException("Only idle units can be transferred");
+        }
+
+        // capacity check for station
+        if (!newStation.hasCapacity()) {
+            throw new IllegalStateException("New station is at full capacity");
+        }
+
+        // Remove unit from old station
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == unit.stationId) {
+                stations[i].removeUnit(unitId);
+                break;
+            }
+        }
+
+        // Update unit home
+        unit.stationId = newStationId;
+        unit.x = newStation.x;
+        unit.y = newStation.y;
+        unit.targetX = unit.x;
+        unit.targetY = unit.y;
+        unit.workTimeLeft = 0;
+        unit.incidentId = null;
+
+        // Moves to new station
+        newStation.addUnit(unitId);
     }
 
-
-
-    @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
         
         Unit unit = null;
-
-        //find unit
-        for (Unit u : units) {
-            if (u != null && u.getId() == unitId) {
-                unit = u;
+        
+        // Find unit
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                unit = units[i];
                 break;
             }
         }
-        
 
-        //if not found
+        // Existence check
         if (unit == null) {
-            throw new IDNotRecognisedException("Unit ID not found");
-        }
-        
-        // if already out of service
-        if (unit.getStatus() == UnitStatus.OUT_OF_SERVICE_) {
-            throw new IllegalStateException("Unit already out of service");
+            throw new IDNotRecognisedException("Unit ID not recognised");
         }
 
-        //set status
-        unit.setStatus(UnitStatus.OUT_OF_SERVICE);
-        
-
+        // Only idle units can be taken out of service
+        // code verifies this
+        if (outOfService) {
+            if (unit.status != UnitStatus.IDLE) {
+                throw new IllegalStateException("Only idle units can be taken out of service");
+            }
+            unit.status = UnitStatus.OUT_OF_SERVICE;
+        } else {
+            unit.status = UnitStatus.IDLE;
+        }
     }
 
     @Override
     public int[] getUnitIds() {
-        return gridSize;
+        // id array object
+        int[] ids = new int[unitCount];
+        
+        //fill ids array with every unit id
+        for (int i = 0; i < unitCount; i++) {
+            ids[i] = units[i].unitId;
+        
+        //sort ids
+        Arrays.sort(ids);
+        }
+
+        return ids;
     }
 
     @Override
