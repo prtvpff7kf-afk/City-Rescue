@@ -747,7 +747,7 @@ public class CityRescueImpl implements CityRescue {
                 int distance = Math.abs(unit.x - incident.x) + Math.abs(unit.y - incident.y);
                 
                 //tie break
-                if (distance < bestDistance) {
+                if (best == null || distance < bestDistance || (distance == bestDistance && unit.unitId < best.unitId)) {
                     best = unit;
                     bestDistance = distance;
                 }
@@ -872,7 +872,7 @@ public class CityRescueImpl implements CityRescue {
             }
 
             if (incident != null && incident.status == IncidentStatus.IN_PROGRESS) {
-                if (incident.assignedUnitId == -1) {
+                if (incident.assignedUnitId != -1) {
 
                     Unit unit = null;
                     for (int i = 0; i < unitCount; i++) {
