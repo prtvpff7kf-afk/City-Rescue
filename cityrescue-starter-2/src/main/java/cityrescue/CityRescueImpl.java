@@ -245,7 +245,7 @@ public class CityRescueImpl implements CityRescue {
         stations[stationCount++] = station;
 
         return nextStationId++;
-    };
+    }
 
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
@@ -317,7 +317,7 @@ public class CityRescueImpl implements CityRescue {
     }
 
 
-@Override
+    @Override
     public int addUnit(int stationId, UnitType type) throws IDNotRecognisedException, InvalidUnitException, IllegalStateException {
         
         // Validate unit type
@@ -402,9 +402,11 @@ public class CityRescueImpl implements CityRescue {
         // Remove from unit array by shifting
         for (int i = idx; i < unitCount - 1; i++) {
             units[i] = units[i + 1];
-            units[unitCount - 1] = null;
-            unitCount--;
         }
+        //clear slot
+        units[unitCount - 1] = null;
+        unitCount--;
+        
     }
 
     @Override
@@ -469,6 +471,7 @@ public class CityRescueImpl implements CityRescue {
         newStation.addUnit(unitId);
     }
 
+    @Override  
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
         
         Unit unit = null;
@@ -494,7 +497,9 @@ public class CityRescueImpl implements CityRescue {
             }
             unit.status = UnitStatus.OUT_OF_SERVICE;
         } else {
-            unit.status = UnitStatus.IDLE;
+            if (unit.status == UnitStatus.OUT_OF_SERVICE) {
+                unit.status = UnitStatus.IDLE;
+            }
         }
     }
 
@@ -506,10 +511,9 @@ public class CityRescueImpl implements CityRescue {
         //fill ids array with every unit id
         for (int i = 0; i < unitCount; i++) {
             ids[i] = units[i].unitId;
-        
+        }
         //sort ids
         Arrays.sort(ids);
-        }
 
         return ids;
     }
@@ -537,11 +541,16 @@ public class CityRescueImpl implements CityRescue {
 
         //returned format
         String results = "U#" + unit.unitId +
-            "TYPE: " + unit.type +
-            "HOME: " + unit.stationId +
-            "LOC: (" + unit.x + "," + unit.y + ")" +
-            "STATUS: " + unit.status +
-            "INCIDENT: " + incidentPart;
+            " TYPE=" + unit.type +
+            " HOME=" + unit.stationId +
+            " LOC=(" + unit.x + "," + unit.y + ")" +
+            " STATUS=" + unit.status +
+            " INCIDENT=" + incidentPart;
+
+        // only show work when at scene
+        if (unit.status == UnitStatus.AT_SCENE) {
+            results += " WORK=" + unit.workTimeLeft;
+        }
         return results;
     }
 
@@ -552,6 +561,10 @@ public class CityRescueImpl implements CityRescue {
         if (type == null) {
             throw new IllegalArgumentException("Incident type can't be null");
         }
+        // validate severity
+        if (severity < 1 || severity > 5) {
+            throw new InvalidSeverityException("Severity must be between 1 and 5");
+         }
 
         // Validate location
         if (!cityMap.inBounds(x, y)) {
@@ -582,32 +595,43 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
     
-    // Find the incident
-    int index = -1;
-    for (int i = 0; i < incidentCount; i++) {
-        if (incidents[i].incidentId == incidentId) {
-            index = i;
-            break;
+        Incident incident = null;
+
+        //Find incident
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i].incidentId == incidentId) {
+                incident = incidents[i];
+                break;
+            }
         }
-    }
 
-    if (index == -1) {
-        throw new IDNotRecognisedException("Incident ID not recognised");
-    }
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
 
-    Incident inc = incidents[index];
+        // cancels reported/dispatched incidents
+        if (!(incident.status == IncidentStatus.REPORTED || incident.status == IncidentStatus.DISPATCHED)) {
+            throw new IllegalStateException("Only reported or dispatched incidents can be cancelled");
+        }
 
-    // Can't cancel resolved incidents
-    if (inc.status == IncidentStatus.RESOLVED) {
-        throw new IllegalStateException("Can't cancel a resolved incident");
-    }
+        // update status to idle
+        if (incident.status == IncidentStatus.DISPATCHED && incident.assignedUnitId != -1) {
+            for (int i = 0; i <unitCount; i++) {
+                if (units[i].unitId == incident.assignedUnitId) {
+                    Unit unit = units[i];
+                    unit.status = UnitStatus.IDLE;
+                    unit.incidentId = null;
+                    unit.workTimeLeft = 0;
+                    unit.targetX = unit.x;
+                    unit.targetY = unit.y;
+                    break;
+                }
+            }
+        }
 
-    // Remove the incident
-    for (int i = index; i <incidentCount - 1; i++) {
-        incidents[i] = incidents[i +1];
-    }
-    incidents[incidentCount - 1] = null; //Clear last
-    incidentCount--;
+        // cancelled
+        incident.status = IncidentStatus.CANCELLED;
+        incident.assignedUnitId = -1;
     }
 
     @Override
@@ -626,15 +650,12 @@ public class CityRescueImpl implements CityRescue {
             throw new IDNotRecognisedException("Incident ID not recognised");
         }
 
-        // Can't escalate resolved incidents
-        if(incident.status == IncidentStatus.RESOLVED) {
-            throw new IllegalStateException("Can;t escalate a resolved incident");
+        // Validate severity
+        if (newSeverity < 1 || newSeverity > 5) {
+            throw new InvalidSeverityException("Severity must be between 1 and 5");
         }
 
-        // Validate severity
-        if (newSeverity <= 0) {
-            throw new InvalidSeverityException("Severity must be positive");
-        }
+        //is resolved/cancelled check
         if (incident.status == IncidentStatus.RESOLVED || incident.status == IncidentStatus.CANCELLED) {
             throw new IllegalStateException("Can't escalate resolved/cancelled incidents");
         }
@@ -676,38 +697,71 @@ public class CityRescueImpl implements CityRescue {
             throw new IDNotRecognisedException("Incident ID not recognised");
         }
 
-        return "Incident ID: " + incident.incidentId +
-            ", Type: " + incident.type + 
-            ", Location: (" + incident.x +"," + incident.y + ")" +
-            ", Status: " + incident.status +
-            ", Assigned Unit: " +
-            (incident.assignedUnitId == -1 ? "None" : incident.assignedUnitId);
+        //RETURNED STRING
+        return "I#" + incident.incidentId +
+            " TYPE=" + incident.type + 
+            " SEV=" + incident.severity +
+            " LOC=(" + incident.x +"," + incident.y + ")" +
+            " STATUS=" + incident.status +
+            " UNIT=" +
+            (incident.assignedUnitId == -1 ? "-" : incident.assignedUnitId);
         }
 
     @Override
     public void dispatch() {
     
-        for (int i =0; i < incidentCount; i++) {
-            Incident incident = incidents[i];
+        int[] incidentIds = getIncidentIds();
 
-            // Only assign if still waiting
-            if (incident.status == IncidentStatus.REPORTED) {
-                for (int j = 0; j < unitCount; j++) {
-                    Unit unit = units[j];
+        for (int incidentId : incidentIds) {
+            Incident incident = null;
 
-                    //Check if unit is available
-                    if (!unit.outOfService && unit.assignedIncidentId == -1) {
-
-                        //Assigned unit
-                        unit.assignedIncidentId = incident.incidentId;
-                        incident.assignedUnitId = unit.unitId;
-
-                        // Update status
-                        incident.status = IncidentStatus.IN_PROGRESS;
-
-                        break;
-                    }
+            //find incident
+            for (int i = 0; i < incidentCount; i++) {
+                if (incidents[i].incidentId == incidentId) {
+                    incident = incidents[i];
+                    break;
                 }
+            }
+            if (incident == null || incident.status != IncidentStatus.REPORTED) {
+                continue; // only dispatch reported incidents
+            }
+
+            Unit best = null;
+            int bestDistance = Integer.MAX_VALUE;
+
+            // find best unit for incident
+            for (int i = 0; i < unitCount; i++) {
+                Unit unit = units[i];
+
+                //must be idle
+                if (unit.status != UnitStatus.IDLE) {
+                    continue;
+                }
+                if (unit.status == UnitStatus.OUT_OF_SERVICE) {
+                    continue;
+                }
+                if (!unit.canHandle(incident.type)) {
+                    continue;
+                }
+
+                int distance = Math.abs(unit.x - incident.x) + Math.abs(unit.y - incident.y);
+                
+                //tie break
+                if (distance < bestDistance) {
+                    best = unit;
+                    bestDistance = distance;
+                }
+            }
+
+            if (best != null) {
+                //assign unit to incident
+                best.workTimeLeft = 0;
+                best.status = UnitStatus.EN_ROUTE;
+                best.targetX = incident.x;
+                best.targetY = incident.y;
+                best.incidentId = incident.incidentId;
+                incident.assignedUnitId = best.unitId;
+                incident.status = IncidentStatus.DISPATCHED;
             }
         }
     }
@@ -726,20 +780,23 @@ public class CityRescueImpl implements CityRescue {
                     break;
                 }
             }
-
+            
+            //skips if unit is not en route/or real
             if (unit == null || unit.status != UnitStatus.EN_ROUTE) 
                 continue;
             
+            //manhattan distance
             int currentDistance = Math.abs(unit.x - unit.targetX) + Math.abs(unit.y - unit.targetY);
             
             //directions NESW
             int[] dx = {0, 1, 0, -1}; 
-            int[] dy = {1, 0, -1, 0};
+            int[] dy = {-1, 0, 1, 0};
 
             int bestX = unit.x;
             int bestY = unit.y;
             boolean foundReducing = false;
 
+            // take first best move
             for (int k = 0; k < 4; k++) {
                 int newX = unit.x + dx[k];
                 int newY = unit.y + dy[k];
@@ -754,6 +811,7 @@ public class CityRescueImpl implements CityRescue {
                 }
             }
 
+            //else just take a legal move
             if (!foundReducing) {
                 for (int k = 0; k < 4; k++) {
                     int newX = unit.x + dx[k];
@@ -813,7 +871,7 @@ public class CityRescueImpl implements CityRescue {
                 }
             }
 
-            if (incident != null && incident.status != IncidentStatus.IN_PROGRESS) {
+            if (incident != null && incident.status == IncidentStatus.IN_PROGRESS) {
                 if (incident.assignedUnitId == -1) {
 
                     Unit unit = null;
@@ -841,11 +899,11 @@ public class CityRescueImpl implements CityRescue {
     public String getStatus() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("TICK=").append(currentTick).append("\n");
-        sb.append("STATIONS=").append(stationCount)
-            .append("UNITS=").append(unitCount)
-            .append("INCIDENTS=").append(incidentCount)
-            .append("OBSTACLES=").append(cityMap.countObstacles())
+        sb.append(" TICK=").append(currentTick).append("\n");
+        sb.append(" STATIONS=").append(stationCount)
+            .append(" UNITS=").append(unitCount)
+            .append(" INCIDENTS=").append(incidentCount)
+            .append(" OBSTACLES=").append(cityMap.countObstacles())
             .append("\n");
         
         //lists all the incidents
