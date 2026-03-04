@@ -20,7 +20,6 @@ public class CityRescueImpl implements CityRescue {
 
     private static class Station{
 
-        //attributes
         private final int stationId;
         private final String name;
         private final int x;
@@ -32,7 +31,6 @@ public class CityRescueImpl implements CityRescue {
         private final int[] unitIds = new int[50];
         private int unitCount = 0;
 
-        // Constructor
         Station(int stationId, String name, int x, int y) {
             this.stationId = stationId;
             this.name = name;
@@ -46,7 +44,6 @@ public class CityRescueImpl implements CityRescue {
             unitIds[unitCount++] = unitId;
         }
 
-        // removeUnit
         void removeUnit(int unitId) {
             for (int i = 0; i < unitCount; i++) {
                 if (unitIds[i] == unitId) {
@@ -64,16 +61,14 @@ public class CityRescueImpl implements CityRescue {
 
     private static class Incident{
 
-        //attributers
         IncidentType type;
         IncidentStatus status;
         int severity;
         int x;
         int y;
         int incidentId;
-        int assignedUnitId = -1; //no unit on the job
+        int assignedUnitId = -1; //no unit on the job 
 
-        //constructor
         public Incident(int incidentId, IncidentType type, int severity, int x, int y) {
             this.incidentId = incidentId;
             this.type = type;
@@ -84,10 +79,8 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
-    //unit superclass
     private static abstract class Unit{
 
-        //super attributes
         int unitId;
         int stationId;
         UnitType type;
@@ -186,6 +179,53 @@ public class CityRescueImpl implements CityRescue {
 
     private int currentTick = 0;
 
+    // linear searches methods!
+
+    private Station findStation(int stationId) {
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == stationId) {
+                return stations[i];
+            }
+        }
+        return null;
+    }
+
+    private int findStationIndex(int stationId) {
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i].stationId == stationId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Unit findUnit(int unitId) {
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                return units[i];
+            }
+        }
+        return null;
+    }
+
+    private int findUnitIndex(int unitId) {
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i].unitId == unitId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Incident findIncident(int incidentId) {
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i].incidentId == incidentId) {
+                return incidents[i];
+            }
+        }
+        return null;
+    }
+
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
         
@@ -224,7 +264,7 @@ public class CityRescueImpl implements CityRescue {
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
         //validates name
         if (name == null || name.isBlank()) {
-            throw new InvalidNameException("Station name can't be blank");
+            throw new InvalidNameException("Station name cannot be blank");
         }
         //boundary validation
         if (!cityMap.inBounds(x, y)) {
@@ -250,15 +290,8 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
        
-        int idx = -1; //index of station to remove
-
-        //find station
-        for (int i = 0; i < stationCount; i++) {
-            if (stations[i].stationId == stationId) {
-                idx = i;
-                break;
-            }
-        }
+        int idx = findStationIndex(stationId);
+        
         if (idx == -1) {
             throw new IDNotRecognisedException("Station ID not recognised");
         }
@@ -276,14 +309,8 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void setStationCapacity(int stationId, int maxUnits) throws IDNotRecognisedException, InvalidCapacityException {
         
-        // Find station
-        Station targetStation = null;
-        for (int i = 0; i < stationCount; i++) {
-            if (stations[i].stationId == stationId) {
-                targetStation = stations[i];
-                break;
-            }
-        }
+        Station targetStation = findStation(stationId);
+
         // existence check
         if (targetStation == null) {
             throw new IDNotRecognisedException("Station ID not recognised");
@@ -295,7 +322,7 @@ public class CityRescueImpl implements CityRescue {
         }
 
         if (maxUnits < targetStation.unitCount) {
-            throw new InvalidCapacityException("Capacity can't be less than current number of units");
+            throw new InvalidCapacityException("Capacity cannot be less than current number of units");
         }
 
         //Update capacity
@@ -322,19 +349,14 @@ public class CityRescueImpl implements CityRescue {
         
         // Validate unit type
         if (type == null) {
-            throw new InvalidUnitException("Unit type can't be null");
+            throw new InvalidUnitException("Unit type cannot be null");
         }
         if (unitCount >= MAX_UNITS) {
             throw new CapacityExceededException("Max number of units reached");
         }
         
-        Station station = null;
-        for (int i = 0; i < stationCount; i++) {
-            if (stations[i].stationId == stationId) {
-                station = stations[i];
-                break;
-            }
-        }
+        Station station = findStation(stationId);
+        
         if (station == null) {
             throw new IDNotRecognisedException("Station ID is unrecognisable"); 
         }
@@ -371,16 +393,9 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         
-        int idx = -1;
+        int idx = findUnitIndex(unitId);
 
-        //find unit
-        for (int i = 0; i < unitCount; i++) {
-            if (units[i].unitId == unitId) {
-                idx = i;
-                break;
-            }
-        }
-        //existance check
+        //existence check
         if (idx == -1) {
             throw new IDNotRecognisedException("Unit ID not recognised");
         }
@@ -412,30 +427,16 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
     
-        Unit unit = null;
-
-        // Find unit
-        for (int i = 0; i < unitCount; i++) {
-            if (units[i].unitId == unitId) {
-                unit = units[i];
-                break;
-            }
-        }
+        Unit unit = findUnit(unitId);
 
         // Existence check for unit
         if (unit == null) {
             throw new IDNotRecognisedException("Unit ID not recognised");
         }
         
-        Station newStation = null;
-        for (int i = 0; i < stationCount; i++) {
-            if (stations[i].stationId == newStationId) {
-                newStation = stations[i];
-                break;
-            }
-        }
+        Station newStation = findStation(newStationId);
 
-        // Existance check for station
+        // Existence check for station
         if (newStation == null) {
             throw new IDNotRecognisedException("New station ID not recognised");
         }
@@ -474,15 +475,7 @@ public class CityRescueImpl implements CityRescue {
     @Override  
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
         
-        Unit unit = null;
-        
-        // Find unit
-        for (int i = 0; i < unitCount; i++) {
-            if (units[i].unitId == unitId) {
-                unit = units[i];
-                break;
-            }
-        }
+        Unit unit = findUnit(unitId);
 
         // Existence check
         if (unit == null) {
@@ -512,7 +505,7 @@ public class CityRescueImpl implements CityRescue {
         for (int i = 0; i < unitCount; i++) {
             ids[i] = units[i].unitId;
         }
-        //sort ids
+        
         Arrays.sort(ids);
 
         return ids;
@@ -521,15 +514,7 @@ public class CityRescueImpl implements CityRescue {
     @Override //do this one
     public String viewUnit(int unitId) throws IDNotRecognisedException {
     
-        Unit unit = null;
-
-        //find unit
-        for (int i = 0; i < unitCount; i++) {
-            if (units[i].unitId == unitId) {
-                unit = units[i];
-                break;
-            }
-        }
+        Unit unit = findUnit(unitId);
 
         //existence check
         if (unit == null) {
@@ -559,7 +544,7 @@ public class CityRescueImpl implements CityRescue {
     
         // validate type
         if (type == null) {
-            throw new IllegalArgumentException("Incident type can't be null");
+            throw new IllegalArgumentException("Incident type cannot be null");
         }
         // validate severity
         if (severity < 1 || severity > 5) {
@@ -595,15 +580,7 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
     
-        Incident incident = null;
-
-        //Find incident
-        for (int i = 0; i < incidentCount; i++) {
-            if (incidents[i].incidentId == incidentId) {
-                incident = incidents[i];
-                break;
-            }
-        }
+        Incident incident = findIncident(incidentId);
 
         if (incident == null) {
             throw new IDNotRecognisedException("Incident ID not recognised");
@@ -637,14 +614,7 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
     
-        // Find incident
-        Incident incident = null;
-        for (int i = 0; i < incidentCount; i++) {
-            if (incidents[i].incidentId == incidentId) {
-                incident = incidents[i];
-                break;
-            }
-        }
+        Incident incident = findIncident(incidentId);
 
         if (incident == null) {
             throw new IDNotRecognisedException("Incident ID not recognised");
@@ -657,7 +627,7 @@ public class CityRescueImpl implements CityRescue {
 
         //is resolved/cancelled check
         if (incident.status == IncidentStatus.RESOLVED || incident.status == IncidentStatus.CANCELLED) {
-            throw new IllegalStateException("Can't escalate resolved/cancelled incidents");
+            throw new IllegalStateException("Cannot escalate resolved/cancelled incidents");
         }
 
         // Update severity
@@ -684,14 +654,7 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public String viewIncident(int incidentId) throws IDNotRecognisedException {
     
-        Incident incident = null;
-
-        for (int i = 0; i < incidentCount; i++) {
-            if (incidents[i].incidentId == incidentId) {
-                incident = incidents[i];
-                break;
-            }
-        }
+        Incident incident = findIncident(incidentId);
 
         if (incident == null) {
             throw new IDNotRecognisedException("Incident ID not recognised");
@@ -713,15 +676,9 @@ public class CityRescueImpl implements CityRescue {
         int[] incidentIds = getIncidentIds();
 
         for (int incidentId : incidentIds) {
-            Incident incident = null;
+            
+            Incident incident = findIncident(incidentId);
 
-            //find incident
-            for (int i = 0; i < incidentCount; i++) {
-                if (incidents[i].incidentId == incidentId) {
-                    incident = incidents[i];
-                    break;
-                }
-            }
             if (incident == null || incident.status != IncidentStatus.REPORTED) {
                 continue; // only dispatch reported incidents
             }
@@ -773,13 +730,8 @@ public class CityRescueImpl implements CityRescue {
         //start moving units in ascending id order
         int[] unitIds = getUnitIds();
         for (int finalUnitId : unitIds) {
-            Unit unit = null;
-            for (int i = 0; i < unitCount; i++) {
-                if (units[i].unitId == finalUnitId) {
-                    unit = units[i];
-                    break;
-                }
-            }
+            
+            Unit unit = findUnit(finalUnitId);
             
             //skips if unit is not en route/or real
             if (unit == null || unit.status != UnitStatus.EN_ROUTE) 
@@ -863,24 +815,13 @@ public class CityRescueImpl implements CityRescue {
         // check for incidents that are resolved
         int[] incidentIds = getIncidentIds();
         for (int incidentId : incidentIds) {
-            Incident incident = null;
-            for (int i = 0; i < incidentCount; i++) {
-                if (incidents[i].incidentId == incidentId) {
-                    incident = incidents[i];
-                    break;
-                }
-            }
+            
+            Incident incident = findIncident(incidentId);
 
             if (incident != null && incident.status == IncidentStatus.IN_PROGRESS) {
                 if (incident.assignedUnitId != -1) {
 
-                    Unit unit = null;
-                    for (int i = 0; i < unitCount; i++) {
-                        if (units[i].unitId == incident.assignedUnitId) {
-                            unit = units[i];
-                            break;
-                        }
-                    }
+                    Unit unit = findUnit(incident.assignedUnitId);
 
                     if (unit != null && unit.status == UnitStatus.AT_SCENE && unit.workTimeLeft == 0) {
                         incident.status = IncidentStatus.RESOLVED;
