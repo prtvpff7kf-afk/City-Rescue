@@ -10,10 +10,9 @@ public class PublicEdgeTest {
     private CityRescue cr;
 
     @BeforeEach
-    Void setup() throws Exception {
+    void setUp() throws Exception {
         cr = new CityRescueImpl();
         cr.initialise(5, 5);
-        return null;
     }
 
     @Test

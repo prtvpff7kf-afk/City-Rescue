@@ -452,11 +452,9 @@ public class CityRescueImpl implements CityRescue {
         }
 
         // Remove unit from old station
-        for (int i = 0; i < stationCount; i++) {
-            if (stations[i].stationId == unit.stationId) {
-                stations[i].removeUnit(unitId);
-                break;
-            }
+        Station oldStation = findStation(unit.stationId);
+        if (oldStation != null) {
+            oldStation.removeUnit(unitId);
         }
 
         // Update unit home
@@ -693,10 +691,8 @@ public class CityRescueImpl implements CityRescue {
                 //must be idle
                 if (unit.status != UnitStatus.IDLE) {
                     continue;
-                }
-                if (unit.status == UnitStatus.OUT_OF_SERVICE) {
-                    continue;
-                }
+                }       
+
                 if (!unit.canHandle(incident.type)) {
                     continue;
                 }
@@ -749,9 +745,9 @@ public class CityRescueImpl implements CityRescue {
             boolean foundReducing = false;
 
             // take first best move
-            for (int k = 0; k < 4; k++) {
-                int newX = unit.x + dx[k];
-                int newY = unit.y + dy[k];
+            for (int i = 0; i < 4; i++) {
+                int newX = unit.x + dx[i];
+                int newY = unit.y + dy[i];
                 if (cityMap.inBounds(newX, newY) && !cityMap.isBlocked(newX, newY)) {
                     int newDistance = Math.abs(newX - unit.targetX) + Math.abs(newY - unit.targetY);
                     if (newDistance < currentDistance) {
@@ -765,9 +761,9 @@ public class CityRescueImpl implements CityRescue {
 
             //else just take a legal move
             if (!foundReducing) {
-                for (int k = 0; k < 4; k++) {
-                    int newX = unit.x + dx[k];
-                    int newY = unit.y + dy[k];
+                for (int i = 0; i < 4; i++) {
+                    int newX = unit.x + dx[i];
+                    int newY = unit.y + dy[i];
                     if (cityMap.inBounds(newX, newY) && !cityMap.isBlocked(newX, newY)) {
                         bestX = newX;
                         bestY = newY;
@@ -782,29 +778,24 @@ public class CityRescueImpl implements CityRescue {
         // work at incidents
         for (int i = 0; i < unitCount; i++) {
             Unit unit = units[i];
-            if (unit.status != UnitStatus.EN_ROUTE)
+
+            if (unit.status != UnitStatus.EN_ROUTE) {
                 continue;
+                }
 
             if (unit.x == unit.targetX && unit.y == unit.targetY) {
-                Incident incident = null;
-                if (unit.incidentId != null) {
-                    for (int j = 0; j < incidentCount; j++) {
-                        if (incidents[j].incidentId == unit.incidentId) {
-                            incident = incidents[j];
-                            break;
-                        }
-                    }
+                Incident incident = (unit.incidentId == null) ? null : findIncident(unit.incidentId);
 
-                    unit.status = UnitStatus.AT_SCENE;
+                unit.status = UnitStatus.AT_SCENE;
 
-                    //inprogress
-                    if (incident != null && incident.status == IncidentStatus.DISPATCHED) {
-                        incident.status = IncidentStatus.IN_PROGRESS;
-                        unit.workTimeLeft = unit.getWorkTime(incident.severity);
-                    }
+                //inprogress
+                if (incident != null && incident.status == IncidentStatus.DISPATCHED) {
+                    incident.status = IncidentStatus.IN_PROGRESS;
+                    unit.workTimeLeft = unit.getWorkTime(incident.severity);
+                }
                 }
             }
-        }
+        
         // work time decrement
         for (int i = 0; i < unitCount; i++) {
             Unit unit = units[i];
@@ -836,6 +827,32 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    public String formatUnit(Unit unit) {
+        String incidentPart = (unit.incidentId == null) ? "-" : String.valueOf(unit.incidentId);
+
+        //formatted code up to spec
+        String result = "U#" + unit.unitId
+                + " TYPE=" + unit.type
+                + " HOME=" + unit.stationId
+                + " LOC=(" + unit.x + "," + unit.y + ")"
+                + " STATUS=" + unit.status
+                + " INCIDENT=" + incidentPart;
+
+        if (unit.status == UnitStatus.AT_SCENE) {
+            result += " WORK=" + unit.workTimeLeft;
+        }
+        return result;
+    }
+
+    public String formatIncident(Incident incident) {
+        return "I#" + incident.incidentId
+                + " TYPE=" + incident.type
+                + " SEV=" + incident.severity
+                + " LOC=(" + incident.x + "," + incident.y + ")"
+                + " STATUS=" + incident.status
+                + " UNIT=" + (incident.assignedUnitId == -1 ? "-" : incident.assignedUnitId);
+    }
+
     @Override
     public String getStatus() {
         StringBuilder sb = new StringBuilder();
@@ -851,26 +868,23 @@ public class CityRescueImpl implements CityRescue {
         sb.append("INCIDENTS\n");
         int[] incidentIds = getIncidentIds();
         for (int id : incidentIds) {
-            try {
-                sb.append(viewIncident(id)).append("\n");
-            } 
-            catch (Exception ignoredException) {
-
+            Incident incident = findIncident(id);
+            if (incident != null) {
+                sb.append(formatIncident(incident)).append("\n");
             }
         }
-
-        //list all the units
+        
+        //Same for units
+        //return string nicely
         sb.append("UNITS\n");
         int[] unitIds = getUnitIds();
         for (int id : unitIds) {
-            try {
-                sb.append(viewUnit(id)).append("\n");
-            } 
-            catch (Exception ignoredException) {
-
+            Unit unit = findUnit(id);
+            if (unit != null) {
+                sb.append(formatUnit(unit)).append("\n");
             }
         }
-        //return string nicely
+
         if (sb.length() > 0) {
             sb.setLength(sb.length() - 1); // Remove last newline
         }

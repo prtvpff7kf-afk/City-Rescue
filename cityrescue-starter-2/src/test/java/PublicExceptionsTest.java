@@ -26,13 +26,13 @@ public class PublicExceptionsTest {
     //empty validation test
     void blankName_forStation() throws Exception {
         assertThrows(InvalidNameException.class, () -> {
-            cr.addStation("", 6, 7);});
+            cr.addStation("", 2, 2);});
     }
 
     @Test
     //Sets capacity of test station to impossible value
     void setStationCapacity_negative() throws Exception {
-        int station = cr.addStation("Test", 6, 7);
+        int station = cr.addStation("Test", 2, 2);
         assertThrows(InvalidCapacityException.class, () -> {
             cr.setStationCapacity(station, -1);});
     }
